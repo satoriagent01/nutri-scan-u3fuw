@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NutriScan - Rastreador Nutricional</title>
+  <style>
+    :root {
+      --primary: #2d6a4f;
+      --primary-light: #40916c;
+      --bg: #f8f9fa;
+      --card-bg: #ffffff;
+      --text: #212529;
+      --text-light: #6c757d;
+      --border: #dee2e6;
+      --danger: #e63946;
+      --warning: #f4a261;
+      --success: #2a9d8f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+
+    header {
+      background: var(--primary);
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    header h1 { font-size: 1.5rem; font-weight: 700; }
+    header p { font-size: 0.85rem; opacity: 0.9; }
+
+    nav {
+      display: flex;
+      background: var(--primary-light);
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    nav button {
+      flex: 1;
+      padding: 0.75rem 0.5rem;
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    nav button.active {
+      color: white;
+      background: rgba(255,255,255,0.15);
+      border-bottom: 3px solid white;
+    }
+
+    main {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1rem;
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .card {
+      background: var(--card-bg);
+      border-radius: 12px;
+      padding: 1.25rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .card h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.75rem;
+      color: var(--primary);
+    }
+
+    .card h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1.2rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover { background: var(--primary-light); }
+
+    .btn-secondary {
+      background: var(--bg);
+      color: var(--primary);
+      border: 1px solid var(--border);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-sm {
+      padding: 0.4rem 0.8rem;
+      font-size: 0.8rem;
+    }
+
+    .btn-block {
+      display: block;
+      width: 100%;
+      text-align: center;
+      justify-content: center;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 0.6rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      margin-bottom: 0.75rem;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.15);
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: var(--text-light);
+    }
+
+    .form-group { margin-bottom: 0.75rem; }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+    }
+
+    .nutrition-item {
+      background: var(--bg);
+      padding: 0.6rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .nutrition-item .value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: var(--primary);
+    }
+
+    .nutrition-item .label {
+      font-size: 0.75rem;
+      color: var(--text-light);
+    }
+
+    .nutrition-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .product-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.75rem;
+      background: var(--bg);
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .product-item .name { font-weight: 600; }
+    .product-item .grams { color: var(--text-light); font-size: 0.85rem; }
+
+    .progress-bar {
+      width: 100%;
+      height: 8px;
+      background: var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 0.25rem;
+    }
+
+    .progress-bar .fill {
+      height: 100%;
+      background: var(--success);
+      transition: width 0.3s;
+    }
+
+    .progress-bar .fill.warning { background: var(--warning); }
+    .progress-bar .fill.danger { background: var(--danger); }
+
+    .upload-area {
+      border: 2px dashed var(--border);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .upload-area:hover {
+      border-color: var(--primary);
+      background: rgba(45,106,79,0.05);
+    }
+
+    .upload-area.dragover {
+      border-color: var(--primary);
+      background: rgba(45,106,79,0.1);
+    }
+
+    .preview-image {
+      max-width: 100%;
+      max-height: 200px;
+      border-radius: 8px;
+      margin: 0.5rem 0;
+    }
+
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .spinner {
+      display: inline-block;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    .alert {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .alert-info {
+      background: #e3f2fd;
+      color: #1565c0;
+      border: 1px solid #bbdefb;
+    }
+
+    .alert-success {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+    }
+
+    .alert-error {
+      background: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+    }
+
+    .meal-item {
+      background: var(--bg);
+      padding: 0.75rem;
+      border-radius: 8px;
+      margin-bottom: 0.5rem;
+    }
+
+    .meal-item .meal-name {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 2rem;
+      color: var(--text-light);
+    }
+
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+
+    .config-section {
+      background: var(--bg);
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .config-section h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    @media (max-width: 480px) {
+      .nutrition-grid { grid-template-columns: 1fr 1fr; }
+      main { padding: 0.75rem; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🥗 NutriScan</h1>
+    <p>Rastreador nutricional libre y sin anuncios</p>
+  </header>
+
+  <nav>
+    <button class="active" data-tab="scan">📷 Escanear</button>
+    <button data-tab="products">📦 Productos</button>
+    <button data-tab="meal">🍽️ Comidas</button>
+    <button data-tab="goals">🎯 Metas</button>
+    <button data-tab="config">⚙️ Config</button>
+  </nav>
+
+  <main>
+    <!-- Scan Tab -->
+    <div id="tab-scan" class="tab-content active">
+      <div class="card">
+        <h2>📷 Escanear Etiqueta</h2>
+        <p style="font-size: 0.85rem; color: var(--text-light); margin-bottom: 1rem;">
+          Toma una foto de la tabla nutricional del producto o súbelo desde tu galería.
+        </p>
+
+        <div class="upload-area" id="uploadArea">
+          <p>📸 Toca para tomar foto o subir imagen</p>
+          <input type="file" id="fileInput" accept="image/*" capture="environment" style="display:none">
+        </div>
+
+        <img id="previewImage" class="preview-image" style="display:none">
+
+        <div id="scanStatus" style="margin-top: 1rem;"></div>
+
+        <button class="btn btn-primary btn-block" id="scanBtn" style="margin-top: 1rem;" disabled>
+          🔍 Extraer Información
+        </button>
+      </div>
+
+      <div id="scanResult" class="card" style="display:none;">
+        <h2>✅ Información Extraída</h2>
+        <div id="scanResultContent"></div>
+        <button class="btn btn-secondary btn-block" id="saveProductBtn" style="margin-top: 1rem;">
+          💾 Guardar Producto
+        </button>
+      </div>
+    </div>
+
+    <!-- Products Tab -->
+    <div id="tab-products" class="tab-content">
+      <div class="card">
+        <h2>📦 Mis Productos</h2>
+        <div id="productsList">
+          <div class="empty-state">
+            <div class="icon">📦</div>
+            <p>No hay productos guardados</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Meal Tab -->
+    <div id="tab-meal" class="tab-content">
+      <div class="card">
+        <h2>🍽️ Plan de Comidas</h2>
+        <div class="form-group">
+          <label>Fecha</label>
+          <input type="date" id="mealDate">
+        </div>
+        <div class="form-group">
+          <label>Nombre de la comida</label>
+          <input type="text" id="mealName" placeholder="Ej: Desayuno">
+        </div>
+        <div class="form-group">
+          <label>Producto</label>
+          <select id="mealProductSelect">
+            <option value="">Seleccionar producto...</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Gramos</label>
+          <input type="number" id="mealGrams" placeholder="Ej: 30" min="0">
+        </div>
+        <button class="btn btn-primary btn-block" id="addMealItem">
+          ➕ Agregar a la comida
+        </button>
+      </div>
+
+      <div class="card">
+        <h2>Comida Actual</h2>
+        <div id="mealItemsList">
+          <div class="empty-state">
+            <div class="icon">🍽️</div>
+            <p>Agrega productos a tu comida</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" id="mealSummaryCard" style="display:none;">
+        <h2>📊 Resumen Nutricional</h2>
+        <div id="mealSummary" class="nutrition-grid"></div>
+      </div>
+    </div>
+
+    <!-- Goals Tab -->
+    <div id="tab-goals" class="tab-content">
+      <div class="card">
+        <h2>🎯 Mis Metas Diarias</h2>
+        <div id="goalsDisplay" class="nutrition-grid"></div>
+      </div>
+
+      <div class="card">
+        <h2>Editar Metas</h2>
+        <div class="form-group">
+          <label>Calorías (kcal)</label>
+          <input type="number" id="goalEnergy" value="2000">
+        </div>
+        <div class="form-group">
+          <label>Grasas (g)</label>
+          <input type="number" id="goalFat" value="65">
+        </div>
+        <div class="form-group">
+          <label>Grasas Saturadas (g)</label>
+          <input type="number" id="goalSaturatedFat" value="20">
+        </div>
+        <div class="form-group">
+          <label>Carbohidratos (g)</label>
+          <input type="number" id="goalCarbohydrates" value="275">
+        </div>
+        <div class="form-group">
+          <label>Azúcares (g)</label>
+          <input type="number" id="goalSugars" value="50">
+        </div>
+        <div class="form-group">
+          <label>Fibra (g)</label>
+          <input type="number" id="goalFiber" value="25">
+        </div>
+        <div class="form-group">
+          <label>Proteínas (g)</label>
+          <input type="number" id="goalProtein" value="50">
+        </div>
+        <div class="form-group">
+          <label>Sal (g)</label>
+          <input type="number" id="goalSalt" value="6">
+        </div>
+        <button class="btn btn-primary btn-block" id="saveGoalsBtn">
+          💾 Guardar Metas
+        </button>
+      </div>
+    </div>
+
+    <!-- Config Tab -->
+    <div id="tab-config" class="tab-content">
+      <div class="card">
+        <h2>⚙️ Configuración</h2>
+
+        <div class="config-section">
+          <h3>🤖 Endpoint de IA</h3>
+          <p style="font-size: 0.8rem; color: var(--text-light); margin-bottom: 0.75rem;">
+            Configura tu endpoint OpenAI-compatible para el OCR.
+          </p>
+          <div class="form-group">
+            <label>URL del Endpoint</label>
+            <input type="url" id="apiEndpoint" placeholder="https://api.openai.com/v1/chat/completions">
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="apiKey" placeholder="sk-...">
+          </div>
+          <button class="btn btn-primary btn-block" id="saveConfigBtn">
+            💾 Guardar Configuración
+          </button>
+        </div>
+
+        <div class="config-section">
+          <h3>🌐 Idioma</h3>
+          <div class="form-group">
+            <label>Idioma de la interfaz</label>
+            <select id="languageSelect">
+              <option value="es">Español</option>
+              <option value="en">English</option>
+              <option value="de">Deutsch</option>
+              <option value="nl">Nederlands</option>
+              <option value="fr">Français</option>
+              <option value="it">Italiano</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <h3>🗑️ Datos</h3>
+          <button class="btn btn-danger btn-block" id="clearDataBtn">
+            Borrar todos los datos
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { extractNutrition } from '../src/ocr.js';
+    import { calculateServing, calculateMeal } from '../src/nutrition.js';
+    import { saveProducts, loadProducts, saveMealPlan, loadMealPlan, saveGoals, loadGoals } from '../src/storage.js';
+
+    // State
+    let currentImageData = null;
+    let currentNutritionData = null;
+    let currentMealItems = [];
+
+    // Translations
+    const translations = {
+      es: {
+        scan: '📷 Escanear', products: '📦 Productos', meal: '🍽️ Comidas',
+        goals: '🎯 Metas', config: '⚙️ Config',
+        scanTitle: '📷 Escanear Etiqueta',
+        scanDesc: 'Toma una foto de la tabla nutricional del producto o súbelo desde tu galería.',
+        upload: '📸 Toca para tomar foto o subir imagen',
+        extract: '🔍 Extraer Información',
+        extracted: '✅ Información Extraída',
+        saveProduct: '💾 Guardar Producto',
+        myProducts: '📦 Mis Productos',
+        noProducts: 'No hay productos guardados',
+        mealPlan: '🍽️ Plan de Comidas',
+        date: 'Fecha',
+        mealName: 'Nombre de la comida',
+        product: 'Producto',
+        grams: 'Gramos',
+        addMealItem: '➕ Agregar a la comida',
+        currentMeal: 'Comida Actual',
+        addProducts: 'Agrega productos a tu comida',
+        summary: '📊 Resumen Nutricional',
+        myGoals: '🎯 Mis Metas Diarias',
+        editGoals: 'Editar Metas',
+        calories: 'Calorías',
+        fat: 'Grasas',
+        saturatedFat: 'Grasas Sat.',
+        carbs: 'Carbos',
+        sugars: 'Azúcares',
+        fiber: 'Fibra',
+        protein: 'Proteínas',
+        salt: 'Sal',
+        saveGoals: '💾 Guardar Metas',
+        aiEndpoint: '🤖 Endpoint de IA',
+        endpointDesc: 'Configura tu endpoint OpenAI-compatible para el OCR.',
+        endpointUrl: 'URL del Endpoint',
+        apiKey: 'API Key',
+        saveConfig: '💾 Guardar Configuración',
+        language: '🌐 Idioma',
+        languageLabel: 'Idioma de la interfaz',
+        data: '🗑️ Datos',
+        clearData: 'Borrar todos los datos',
+        scanning: 'Escaneando...',
+        saved: 'Producto guardado',
+        error: 'Error al escanear',
+        selectProduct: 'Seleccionar producto...',
+        kcal: 'kcal',
+        g: 'g'
+      },
+      en: {
+        scan: '📷 Scan', products: '📦 Products', meal: '🍽️ Meals',
+        goals: '🎯 Goals', config: '⚙️ Config',
+        scanTitle: '📷 Scan Label',
+        scanDesc: 'Take a photo of the nutrition label or upload from gallery.',
+        upload: '📸 Tap to take photo or upload image',
+        extract: '🔍 Extract Info',
+        extracted: '✅ Extracted Info',
+        saveProduct: '💾 Save Product',
+        myProducts: '📦 My Products',
+        noProducts: 'No products saved',
+        mealPlan: '🍽️ Meal Plan',
+        date: 'Date',
+        mealName: 'Meal name',
+        product: 'Product',
+        grams: 'Grams',
+        addMealItem: '➕ Add to meal',
+        currentMeal: 'Current Meal',
+        addProducts: 'Add products to your meal',
+        summary: '📊 Nutritional Summary',
+        myGoals: '🎯 My Daily Goals',
+        editGoals: 'Edit Goals',
+        calories: 'Calories',
+        fat: 'Fat',
+        saturatedFat: 'Saturated Fat',
+        carbs: 'Carbs',
+        sugars: 'Sugars',
+        fiber: 'Fiber',
+        protein: 'Protein',
+        salt: 'Salt',
+        saveGoals: '💾 Save Goals',
+        aiEndpoint: '🤖 AI Endpoint',
+        endpointDesc: 'Configure your OpenAI-compatible endpoint for OCR.',
+        endpointUrl: 'Endpoint URL',
+        apiKey: 'API Key',
+        saveConfig: '💾 Save Configuration',
+        language: '🌐 Language',
+        languageLabel: 'Interface language',
+        data: '🗑️ Data',
+        clearData: 'Clear all data',
+        scanning: 'Scanning...',
+        saved: 'Product saved',
+        error: 'Error scanning',
+        selectProduct: 'Select product...',
+        kcal: 'kcal',
+        g: 'g'
+      }
+    };
+
+    let currentLang = localStorage.getItem('nutriScan_language') || 'es';
+
+    // DOM Elements
+    const uploadArea = document.getElementById('uploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const previewImage = document.getElementById('previewImage');
+    const scanBtn = document.getElementById('scanBtn');
+    const scanStatus = document.getElementById('scanStatus');
+    const scanResult = document.getElementById('scanResult');
+    const scanResultContent = document.getElementById('scanResultContent');
+    const saveProductBtn = document.getElementById('saveProductBtn');
+    const productsList = document.getElementById('productsList');
+    const mealDate = document.getElementById('mealDate');
+    const mealName = document.getElementById('mealName');
+    const mealProductSelect = document.getElementById('mealProductSelect');
+    const mealGrams = document.getElementById('mealGrams');
+    const addMealItemBtn = document.getElementById('addMealItem');
+    const mealItemsList = document.getElementById('mealItemsList');
+    const mealSummaryCard = document.getElementById('mealSummaryCard');
+    const mealSummary = document.getElementById('mealSummary');
+    const goalsDisplay = document.getElementById('goalsDisplay');
+    const saveGoalsBtn = document.getElementById('saveGoalsBtn');
+    const apiEndpointInput = document.getElementById('apiEndpoint');
+    const apiKeyInput = document.getElementById('apiKey');
+    const saveConfigBtn = document.getElementById('saveConfigBtn');
+    const languageSelect = document.getElementById('languageSelect');
+    const clearDataBtn = document.getElementById('clearDataBtn');
+
+    // Initialize
+    mealDate.value = new Date().toISOString().split('T')[0];
+    languageSelect.value = currentLang;
+    loadConfig();
+    loadGoalsUI();
+    loadProductsUI();
+    updateTranslations();
+
+    // Tab navigation
+    document.querySelectorAll('nav button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+
+        if (btn.dataset.tab === 'products') loadProductsUI();
+        if (btn.dataset.tab === 'goals') loadGoalsUI();
+        if (btn.dataset.tab === 'meal') updateMealProductSelect();
+      });
+    });
+
+    // File upload
+    uploadArea.addEventListener('click', () => fileInput.click());
+
+    uploadArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      uploadArea.classList.add('dragover');
+    });
+
+    uploadArea.addEventListener('dragleave', () => {
+      uploadArea.classList.remove('dragover');
+    });
+
+    uploadArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      uploadArea.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        handleFile(file);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) handleFile(file);
+    });
+
+    function handleFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        currentImageData = e.target.result.split(',')[1];
+        previewImage.src = e.target.result;
+        previewImage.style.display = 'block';
+        scanBtn.disabled = false;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    // Scan
+    scanBtn.addEventListener('click', async () => {
+      if (!currentImageData) return;
+
+      const endpoint = localStorage.getItem('nutriScan_apiEndpoint') || 'https://api.openai.com/v1/chat/completions';
+      const key = localStorage.getItem('nutriScan_apiKey');
+
+      if (!key) {
+        scanStatus.innerHTML = '<div class="alert alert-error">⚠️ Configura tu API Key en la sección de configuración.</div>';
+        return;
+      }
+
+      scanBtn.disabled = true;
+      scanStatus.innerHTML = '<div class="alert alert-info"><span class="spinner"></span> Escaneando...</div>';
+
+      try {
+        currentNutritionData = await extractNutrition(currentImageData, key, endpoint);
+        displayScanResult();
+        scanStatus.innerHTML = '<div class="alert alert-success">✅ ¡Información extraída correctamente!</div>';
+      } catch (err) {
+        scanStatus.innerHTML = `<div class="alert alert-error">❌ ${err.message}</div>`;
+      } finally {
+        scanBtn.disabled = false;
+      }
+    });
+
+    function displayScanResult() {
+      const t = translations[currentLang] || translations.es;
+      scanResult.style.display = 'block';
+
+      const fields = [
+        { key: 'energy', label: t.calories, unit: t.kcal },
+        { key: 'fat', label: t.fat, unit: t.g },
+        { key: 'saturatedFat', label: t.saturatedFat, unit: t.g },
+        { key: 'carbohydrates', label: t.carbs, unit: t.g },
+        { key: 'sugars', label: t.sugars, unit: t.g },
+        { key: 'fiber', label: t.fiber, unit: t.g },
+        { key: 'protein', label: t.protein, unit: t.g },
+        { key: 'salt', label: t.salt, unit: t.g }
+      ];
+
+      let html = '<div class="nutrition-grid">';
+      fields.forEach(f => {
+        html += `
+          <div class="nutrition-item">
+            <div class="value">${currentNutritionData[f.key].toFixed(1)}</div>
+            <div class="label">${f.label} (${f.unit}/100g)</div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      scanResultContent.innerHTML = html;
+    }
+
+    // Save product
+    saveProductBtn.addEventListener('click', () => {
+      if (!currentNutritionData) return;
+
+      const products = loadProducts();
+      const product = {
+        id: Date.now().toString(),
+        name: `Producto ${products.length + 1}`,
+        nutritionData: { ...currentNutritionData }
+      };
+
+      products.push(product);
+      saveProducts(products);
+
+      const t = translations[currentLang] || translations.es;
+      scanStatus.innerHTML = `<div class="alert alert-success">✅ ${t.saved}</div>`;
+      scanResult.style.display = 'none';
+      previewImage.style.display = 'none';
+      scanBtn.disabled = true;
+      currentImageData = null;
+      currentNutritionData = null;
+    });
+
+    // Load products UI
+    function loadProductsUI() {
+      const products = loadProducts();
+      const t = translations[currentLang] || translations.es;
+
+      if (products.length === 0) {
+        productsList.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">📦</div>
+            <p>${t.noProducts}</p>
+          </div>
+        `;
+        return;
+      }
+
+      productsList.innerHTML = products.map(p => `
+        <div class="product-item">
+          <div>
+            <div class="name">${p.name}</div>
+            <div class="grams">Energía: ${p.nutritionData.energy} kJ/100g</div>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteProduct('${p.id}')">🗑️</button>
+        </div>
+      `).join('');
+    }
+
+    window.deleteProduct = function(id) {
+      let products = loadProducts();
+      products = products.filter(p => p.id !== id);
+      saveProducts(products);
+      loadProductsUI();
+    };
+
+    // Meal planning
+    function updateMealProductSelect() {
+      const products = loadProducts();
+      const t = translations[currentLang] || translations.es;
+
+      mealProductSelect.innerHTML = `<option value="">${t.selectProduct}</option>` +
+        products.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+    }
+
+    addMealItemBtn.addEventListener('click', () => {
+      const productId = mealProductSelect.value;
+      const grams = parseFloat(mealGrams.value);
+
+      if (!productId || isNaN(grams)) return;
+
+      const products = loadProducts();
+      const product = products.find(p => p.id === productId);
+      if (!product) return;
+
+      currentMealItems.push({
+        name: product.name,
+        nutritionData: product.nutritionData,
+        grams: grams
+      });
+
+      displayMealItems();
+      mealProductSelect.value = '';
+      mealGrams.value = '';
+    });
+
+    function displayMealItems() {
+      const t = translations[currentLang] || translations.es;
+
+      if (currentMealItems.length === 0) {
+        mealItemsList.innerHTML = `
+          <div class="empty-state">
+            <div class="icon">🍽️</div>
+            <p>${t.addProducts}</p>
+          </div>
+        `;
+        mealSummaryCard.style.display = 'none';
+        return;
+      }
+
+      mealItemsList.innerHTML = currentMealItems.map((item, i) => `
+        <div class="meal-item">
+          <div class="meal-name">${item.name} (${item.grams}g)</div>
+          <button class="btn btn-danger btn-sm" onclick="removeMealItem(${i})">🗑️</button>
+        </div>
+      `).join('');
+
+      const total = calculateMeal(currentMealItems);
+      displayMealSummary(total);
+    }
+
+    function displayMealSummary(total) {
+      const t = translations[currentLang] || translations.es;
+      mealSummaryCard.style.display = 'block';
+
+      const fields = [
+        { key: 'energy', label: t.calories, unit: t.kcal },
+        { key: 'fat', label: t.fat, unit: t.g },
+        { key: 'saturatedFat', label: t.saturatedFat, unit: t.g },
+        { key: 'carbohydrates', label: t.carbs, unit: t.g },
+        { key: 'sugars', label: t.sugars, unit: t.g },
+        { key: 'fiber', label: t.fiber, unit: t.g },
+        { key: 'protein', label: t.protein, unit: t.g },
+        { key: 'salt', label: t.salt, unit: t.g }
+      ];
+
+      let html = '';
+      fields.forEach(f => {
+        html += `
+          <div class="nutrition-item">
+            <div class="value">${total[f.key].toFixed(1)}</div>
+            <div class="label">${f.label} (${f.unit})</div>
+          </div>
+        `;
+      });
+      mealSummary.innerHTML = html;
+    }
+
+    window.removeMealItem = function(index) {
+      currentMealItems.splice(index, 1);
+      displayMealItems();
+    };
+
+    // Goals
+    function loadGoalsUI() {
+      const goals = loadGoals();
+
+      document.getElementById('goalEnergy').value = goals.energy;
+      document.getElementById('goalFat').value = goals.fat;
+      document.getElementById('goalSaturatedFat').value = goals.saturatedFat;
+      document.getElementById('goalCarbohydrates').value = goals.carbohydrates;
+      document.getElementById('goalSugars').value = goals.sugars;
+      document.getElementById('goalFiber').value = goals.fiber;
+      document.getElementById('goalProtein').value = goals.protein;
+      document.getElementById('goalSalt').value = goals.salt;
+
+      displayGoalsProgress(goals);
+    }
+
+    function displayGoalsProgress(goals) {
+      const t = translations[currentLang] || translations.es;
+
+      // Calculate current intake from today's meal plan
+      const mealPlan = loadMealPlan();
+      let currentIntake = {
+        energy: 0, fat: 0, saturatedFat: 0, carbohydrates: 0,
+        sugars: 0, fiber: 0, protein: 0, salt: 0
+      };
+
+      if (mealPlan && mealPlan.meals) {
+        for (const meal of mealPlan.meals) {
+          if (meal.items) {
+            for (const item of meal.items) {
+              const serving = calculateServing(item.nutritionData, item.grams);
+              for (const key of Object.keys(currentIntake)) {
+                currentIntake[key] += serving[key];
+              }
+            }
+          }
+        }
+      }
+
+      const fields = [
+        { key: 'energy', label: t.calories, unit: t.kcal },
+        { key: 'fat', label: t.fat, unit: t.g },
+        { key: 'saturatedFat', label: t.saturatedFat, unit: t.g },
+        { key: 'carbohydrates', label: t.carbs, unit: t.g },
+        { key: 'sugars', label: t.sugars, unit: t.g },
+        { key: 'fiber', label: t.fiber, unit: t.g },
+        { key: 'protein', label: t.protein, unit: t.g },
+        { key: 'salt', label: t.salt, unit: t.g }
+      ];
+
+      let html = '';
+      fields.forEach(f => {
+        const percentage = goals[f.key] > 0 ? Math.min((currentIntake[f.key] / goals[f.key]) * 100, 100) : 0;
+        const barClass = percentage > 90 ? 'danger' : percentage > 70 ? 'warning' : '';
+
+        html += `
+          <div class="nutrition-item">
+            <div class="value">${currentIntake[f.key].toFixed(1)}/${goals[f.key]}</div>
+            <div class="label">${f.label}</div>
+            <div class="progress-bar">
+              <div class="fill ${barClass}" style="width: ${percentage}%"></div>
+            </div>
+          </div>
+        `;
+      });
+      goalsDisplay.innerHTML = html;
+    }
+
+    saveGoalsBtn.addEventListener('click', () => {
+      const goals = {
+        energy: parseFloat(document.getElementById('goalEnergy').value) || 2000,
+        fat: parseFloat(document.getElementById('goalFat').value) || 65,
+        saturatedFat: parseFloat(document.getElementById('goalSaturatedFat').value) || 20,
+        carbohydrates: parseFloat(document.getElementById('goalCarbohydrates').value) || 275,
+        sugars: parseFloat(document.getElementById('goalSugars').value) || 50,
+        fiber: parseFloat(document.getElementById('goalFiber').value) || 25,
+        protein: parseFloat(document.getElementById('goalProtein').value) || 50,
+        salt: parseFloat(document.getElementById('goalSalt').value) || 6
+      };
+
+      saveGoals(goals);
+      displayGoalsProgress(goals);
+    });
+
+    // Config
+    function loadConfig() {
+      apiEndpointInput.value = localStorage.getItem('nutriScan_apiEndpoint') || '';
+      apiKeyInput.value = localStorage.getItem('nutriScan_apiKey') || '';
+    }
+
+    saveConfigBtn.addEventListener('click', () => {
+      localStorage.setItem('nutriScan_apiEndpoint', apiEndpointInput.value);
+      localStorage.setItem('nutriScan_apiKey', apiKeyInput.value);
+      alert('✅ Configuración guardada');
+    });
+
+    languageSelect.addEventListener('change', () => {
+      currentLang = languageSelect.value;
+      localStorage.setItem('nutriScan_language', currentLang);
+      updateTranslations();
+    });
+
+    function updateTranslations() {
+      const t = translations[currentLang] || translations.es;
+
+      document.querySelector('nav button[data-tab="scan"]').textContent = t.scan;
+      document.querySelector('nav button[data-tab="products"]').textContent = t.products;
+      document.querySelector('nav button[data-tab="meal"]').textContent = t.meal;
+      document.querySelector('nav button[data-tab="goals"]').textContent = t.goals;
+      document.querySelector('nav button[data-tab="config"]').textContent = t.config;
+
+      document.querySelector('#tab-scan h2').textContent = t.scanTitle;
+      document.querySelector('#tab-scan p').textContent = t.scanDesc;
+      uploadArea.querySelector('p').textContent = t.upload;
+      scanBtn.innerHTML = t.extract;
+      scanResult.querySelector('h2').textContent = t.extracted;
+      saveProductBtn.innerHTML = t.saveProduct;
+      document.querySelector('#tab-products h2').textContent = t.myProducts;
+      document.querySelector('#tab-meal h2').textContent = t.mealPlan;
+      document.querySelector('#mealName').placeholder = t.mealName;
+      addMealItemBtn.innerHTML = t.addMealItem;
+      document.querySelector('#mealItemsList').previousElementSibling.textContent = t.currentMeal;
+      document.querySelector('#mealSummaryCard h2').textContent = t.summary;
+      document.querySelector('#tab-goals h2').textContent = t.myGoals;
+      document.querySelector('#tab-goals .card:nth-child(2) h2').textContent = t.editGoals;
+      saveGoalsBtn.innerHTML = t.saveGoals;
+      document.querySelector('#tab-config h2').textContent = t.config;
+      document.querySelector('#tab-config .config-section:nth-child(1) h3').textContent = t.aiEndpoint;
+      document.querySelector('#tab-config .config-section:nth-child(1) p').textContent = t.endpointDesc;
+      document.querySelector('#tab-config .config-section:nth-child(1) label:nth-child(2)').textContent = t.endpointUrl;
+      document.querySelector('#tab-config .config-section:nth-child(1) label:nth-child(4)').textContent = t.apiKey;
+      saveConfigBtn.innerHTML = t.saveConfig;
+      document.querySelector('#tab-config .config-section:nth-child(2) h3').textContent = t.language;
+      document.querySelector('#tab-config .config-section:nth-child(2) label').textContent = t.languageLabel;
+      document.querySelector('#tab-config .config-section:nth-child(3) h3').textContent = t.data;
+      clearDataBtn.textContent = t.clearData;
+    }
+
+    clearDataBtn.addEventListener('click', () => {
+      if (confirm('¿Estás seguro de borrar todos los datos?')) {
+        localStorage.clear();
+        location.reload();
+      }
+    });
+
+    // Save meal plan on date/name change
+    mealDate.addEventListener('change', saveCurrentMealPlan);
+    mealName.addEventListener('input', saveCurrentMealPlan);
+
+    function saveCurrentMealPlan() {
+      if (currentMealItems.length === 0) return;
+
+      const mealPlan = {
+        date: mealDate.value,
+        meals: [
+          {
+            name: mealName.value || 'Comida',
+            items: currentMealItems
+          }
+        ]
+      };
+
+      saveMealPlan(mealPlan);
+    }
+  </script>
+</body>
+</html>
